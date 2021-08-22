@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
+from enum import Enum
 from typing import Dict
 from omegaconf import DictConfig
 from torch import Tensor
@@ -9,6 +10,11 @@ from torch.optim import Adam, Adagrad, Adadelta, Adamax, AdamW, SGD, ASGD
 from deepaudio.vad.optim import AdamP, RAdam, Novograd
 from deepaudio.vad.criterion import CRITERION_REGISTRY
 from deepaudio.vad.optim.scheduler import SCHEDULER_REGISTRY
+
+
+class Resolution(Enum):
+    FRAME = 1  # model outputs a sequence of frames
+    CHUNK = 2  # model outputs just one vector for the whole chunk
 
 
 class BaseModel(pl.LightningModule):
@@ -144,8 +150,8 @@ class BaseModel(pl.LightningModule):
     def validation_step(self, batch: tuple, batch_idx: int):
         X = batch['X']
         y = batch['y']
-        embeddings = self.forward(X)
-        loss = self.criterion(embeddings, y)
+        preds = self.forward(X)
+        loss = self.criterion(preds, y)
         return {
             'val_loss': loss
         }

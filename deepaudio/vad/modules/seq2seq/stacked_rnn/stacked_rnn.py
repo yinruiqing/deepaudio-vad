@@ -3,8 +3,6 @@ from torch.autograd import Variable
 import torch.nn as nn
 
 
-
-
 class StackedRNN(nn.Module):
     """Stacked recurrent neural network
     Parameters
@@ -29,7 +27,7 @@ class StackedRNN(nn.Module):
     """
 
     def __init__(self, n_features,
-                 rnn='LSTM', recurrent=[32, 32], bidirectional=False,
+                 rnn='LSTM', recurrent=[32, 32], bidirectional=True,
                  linear=[32]):
 
         super(StackedRNN, self).__init__()
@@ -38,7 +36,6 @@ class StackedRNN(nn.Module):
         self.rnn = rnn
         self.recurrent = recurrent
         self.bidirectional = bidirectional
-        self.n_classes = n_classes
         self.linear = linear
 
         self.num_directions_ = 2 if self.bidirectional else 1
@@ -71,10 +68,10 @@ class StackedRNN(nn.Module):
 
         # define post-linear activation
         self.tanh_ = nn.Tanh()
+        self.sigmoid_ = nn.Sigmoid()
 
         # create final classification layer (with log-softmax activation)
         self.final_layer_ = nn.Linear(input_dim, self.n_classes)
-
 
     def get_loss(self):
         if self.logsoftmax:
@@ -120,7 +117,6 @@ class StackedRNN(nn.Module):
 
         # stack linear layers
         for hidden_dim, layer in zip(self.linear, self.linear_layers_):
-
             # apply current linear layer
             output = layer(output)
 
@@ -129,5 +125,6 @@ class StackedRNN(nn.Module):
 
         # apply final classification layer
         output = self.final_layer_(output)
+        output = self.sigmoid_(output)
 
         return output
